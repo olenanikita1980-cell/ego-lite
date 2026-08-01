@@ -182,6 +182,23 @@ function makeHandle(
   };
 }
 
+export function buildChromeArgs(config: HostConfig): string[] {
+  const args = [
+    `--user-data-dir=${config.userDataDir}`,
+    `--remote-debugging-port=${config.cdpPort}`,
+    "--remote-debugging-address=127.0.0.1",
+    "--no-first-run",
+    "--no-default-browser-check",
+  ];
+  if (config.headless) {
+    args.push("--headless=new");
+  }
+  if (config.noSandbox) {
+    args.push("--no-sandbox");
+  }
+  return args;
+}
+
 /**
  * Attach to an existing CDP endpoint or launch Chrome with the host profile.
  * Headed by default; throws if headed and no DISPLAY/WAYLAND_DISPLAY.
@@ -219,16 +236,7 @@ export async function ensureChrome(
 
   await mkdir(config.userDataDir, { recursive: true });
 
-  const args = [
-    `--user-data-dir=${config.userDataDir}`,
-    `--remote-debugging-port=${config.cdpPort}`,
-    "--remote-debugging-address=127.0.0.1",
-    "--no-first-run",
-    "--no-default-browser-check",
-  ];
-  if (config.headless) {
-    args.push("--headless=new");
-  }
+  const args = buildChromeArgs(config);
 
   const child = spawn(chromePath, args, {
     detached: true,

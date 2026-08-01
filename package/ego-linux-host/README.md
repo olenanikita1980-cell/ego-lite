@@ -83,8 +83,35 @@ Without Chrome + display, skip the smoke script; unit/integration tests still pa
 | `defaultDataDir()` | `EGO_DATA_DIR` | `$XDG_DATA_HOME/ego-lite` or `~/.local/share/ego-lite` |
 | `defaultConfigDir()` | `EGO_CONFIG_DIR` | `$XDG_CONFIG_HOME/ego-lite` or `~/.config/ego-lite` |
 | `defaultProfileDir()` | `EGO_USER_DATA_DIR` | `<dataDir>/profile` |
-| `defaultSocketPath()` | `EGO_HOST_SOCK` | `<dataDir>/host.sock` |
+| `defaultRuntimeDir()` | `EGO_RUNTIME_DIR` | `<dataDir>` (set `/run/ego-lite` for managed containers) |
+| `defaultSocketPath()` | `EGO_HOST_SOCK` | `<runtimeDir>/host.sock` |
 | `defaultCdpPort()` | `EGO_CDP_PORT` | `9222` |
+
+Keep `EGO_RUNTIME_DIR` off persistent volumes. PID, lock, socket, and local log
+files represent one container lifecycle; only the profile and `spaces.json`
+belong on durable storage.
+
+## Host controls
+
+```bash
+npm run host:run
+npm run host:status
+npm run host:stop
+```
+
+Managed `run` uses an exclusive runtime lock so two daemons cannot own the
+same Chromium profile. `status` distinguishes ready, starting, stale, and
+stopped state. `stop` is idempotent and drives the graceful Chromium shutdown
+path.
+
+## Railway
+
+The repository includes `Dockerfile.railway`, `railway.json`, a non-root
+Chromium entrypoint, and readiness endpoints. Follow the deployment and
+persistence gates in [`docs/railway/DEPLOYMENT.md`](../../docs/railway/DEPLOYMENT.md).
+
+The initial Railway image is deliberately same-container only. It does not
+publish CDP or provide an authenticated remote agent gateway.
 
 ## Diagnostics (`ego-browser --doctor`)
 
@@ -92,7 +119,9 @@ Reports (among others): `chromePath`, `chromeRunning`, `cdpPort`, `cdpUp`, `prof
 
 Hardening behavior:
 
-- **Stale socket**: if `host.sock` exists but ping fails, the CLI unlinks it and restarts the daemon.
+- **Stale socket**: if `host.sock` exists but ping fails, the CLI first checks
+  the managed PID/lock state. It refuses to unlink a socket owned by a live
+  starting process; only confirmed stale runtime artifacts are cleaned.
 - **Chrome death**: the next ego RPC that needs the browser re-runs `ensureChrome` (attach if CDP is back, otherwise respawn). Failures surface as `EGO_BROWSER_UNAVAILABLE` with clear text.
 
 ## Source layout

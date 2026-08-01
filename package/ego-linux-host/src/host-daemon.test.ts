@@ -1,10 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createConnection } from "node:net";
-import { mkdir, readFile, rm } from "node:fs/promises";
+import { mkdir, readFile, rm, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { startDaemon, HOST_VERSION } from "./host-daemon.js";
+import {
+  startDaemon,
+  HOST_VERSION,
+  validateUnixSocketPath,
+} from "./host-daemon.js";
 import {
   decodeLine,
   encodeRequest,
@@ -82,9 +86,22 @@ function testConfig(dir: string): HostConfig {
     headless: true,
     hostSocket: join(dir, "host.sock"),
     dataDir: dir,
+    runtimeDir: join(dir, "run"),
     seedFromChrome: false,
+    noSandbox: false,
   };
 }
+
+test("daemon rejects non-portable Unix socket paths before startup", () => {
+  assert.throws(
+    () => validateUnixSocketPath(`/tmp/${"x".repeat(110)}.sock`),
+    (error: Error & { error_code?: string }) => {
+      assert.equal(error.error_code, "EGO_INVALID_ARGUMENT");
+      assert.match(error.message, /socket path|EGO_RUNTIME_DIR/i);
+      return true;
+    },
+  );
+});
 
 test("daemon listens and answers ping without Chrome", async () => {
   await withTempDir(async (dir) => {
@@ -94,6 +111,7 @@ test("daemon listens and answers ping without Chrome", async () => {
       writePid: true,
     });
     try {
+      assert.equal((await stat(daemon.socketPath)).mode & 0o777, 0o600);
       const result = await rpcCall(daemon.socketPath, "ping");
       assert.deepEqual(result, { ok: true, version: HOST_VERSION });
     } finally {
