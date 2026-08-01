@@ -1,5 +1,43 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, open, readFile, rename, unlink } from "node:fs/promises";
 import { dirname } from "node:path";
+
+type PersistPayload = PersistShape;
+
+function mkTempPath(path: string): string {
+  return `${path}.${Date.now()}.${Math.random().toString(16).slice(2)}.tmp`;
+}
+
+async function writePersistAtomically(
+  path: string,
+  payload: PersistPayload,
+): Promise<void> {
+  const tmpPath = mkTempPath(path);
+  const text = JSON.stringify(payload, null, 2);
+  const handle = await open(tmpPath, "wx", 0o600);
+  try {
+    await handle.writeFile(text, "utf8");
+    await handle.sync();
+    await rename(tmpPath, path);
+  } catch (err) {
+    try {
+      await handle.close();
+    } catch {
+      // ignore
+    }
+    try {
+      await unlink(tmpPath);
+    } catch {
+      // Best-effort cleanup only
+    }
+    throw err;
+  } finally {
+    try {
+      await handle.close();
+    } catch {
+      // ignore
+    }
+  }
+}
 
 export type Ownership = "agent" | "agentDelegatedToUser" | "user";
 
@@ -55,6 +93,7 @@ export class SpaceManager {
   private nextId = USER_SPACE_ID + 1;
   private selectedId: number | null = null;
   private spaces: Space[] = [bootstrapUserSpace()];
+  private saveQueue: Promise<void> = Promise.resolve();
 
   constructor(persistPath?: string) {
     this.persistPath = persistPath;
@@ -144,13 +183,18 @@ export class SpaceManager {
 
   async save(): Promise<void> {
     if (!this.persistPath) return;
-    const payload: PersistShape = {
+    const payload: PersistPayload = {
       nextId: this.nextId,
       selectedId: this.selectedId,
       spaces: this.spaces.map(cloneSpace),
     };
     await mkdir(dirname(this.persistPath), { recursive: true });
-    await writeFile(this.persistPath, JSON.stringify(payload, null, 2), "utf8");
+
+    const op = this.saveQueue.then(() => writePersistAtomically(this.persistPath!, payload));
+    this.saveQueue = op.catch(() => {
+      // keep the queue alive; callers keep own failure handling
+    });
+    await op;
   }
 
   /** Internal list including targetIds. */

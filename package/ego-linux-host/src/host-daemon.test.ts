@@ -164,6 +164,59 @@ test("daemon rejects unknown methods", async () => {
   });
 });
 
+test("daemon close sends graceful Browser.close before fallback", async () => {
+  await withTempDir(async (dir) => {
+    const calls: string[] = [];
+    const config = testConfig(dir);
+    const daemon = await startDaemon({
+      config,
+      ensureChrome: async () => ({
+        pid: 1111,
+        cdpPort: config.cdpPort,
+        userDataDir: config.userDataDir,
+        async waitForExit() {
+          calls.push("chrome.waitForExit");
+          return true;
+        },
+        async kill() {
+          calls.push("chrome.kill");
+        },
+      }),
+      connectCdp: async () => ({
+        async send(method: string) {
+          calls.push(`cdp.send:${method}`);
+          return {};
+        },
+        sendRaw() {},
+        onEvent() {
+          return () => {};
+        },
+        onMessage() {
+          return () => {};
+        },
+        async close() {
+          calls.push("cdp.close");
+        },
+        async listPageTargets() {
+          return [];
+        },
+        async createTarget() {
+          return "new-target";
+        },
+        async attach() {
+          return "session-1";
+        },
+      }),
+    });
+
+    await daemon.close();
+    assert.ok(calls.includes("cdp.send:Browser.close"), "expected Browser.close");
+    assert.ok(calls.includes("cdp.close"), "expected cdp.close");
+    assert.ok(calls.includes("chrome.waitForExit"), "expected graceful exit wait");
+    assert.ok(!calls.includes("chrome.kill"), "expected no hard-kill when exit is observed");
+  });
+});
+
 test("daemon respawns Chrome via ensureChrome when CDP is down on ego method", async () => {
   await withTempDir(async (dir) => {
     let ensureCount = 0;

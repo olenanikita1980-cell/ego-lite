@@ -84,6 +84,37 @@ async function safeUnlink(path: string): Promise<void> {
   }
 }
 
+async function closeChromeWithFallback(
+  cdp: CdpBridge | null,
+  chrome: ChromeHandle | null,
+): Promise<void> {
+  if (chrome === null) return;
+
+  if (cdp) {
+    try {
+      await cdp.send("Browser.close");
+    } catch {
+      // Ignore failures from already-closed/debuggable-browser state.
+    }
+    try {
+      await cdp.close();
+    } catch {
+      // ignore
+    }
+  }
+
+  const waitForExit = chrome.waitForExit;
+  if (waitForExit) {
+    const exited = await waitForExit(3000);
+    if (exited) return;
+  }
+  try {
+    await chrome.kill();
+  } catch {
+    // ignore
+  }
+}
+
 /**
  * Start the host daemon: config → chrome → CDP → spaces → Unix socket.
  */
@@ -411,16 +442,9 @@ export async function startDaemon(
     if (options.writePid !== false) {
       await safeUnlink(pidPath);
     }
-    if (cdp) {
-      try {
-        await cdp.close();
-      } catch {
-        // ignore
-      }
-      cdp = null;
-    }
-    // Do not kill chrome on daemon stop by default — profile may stay warm.
-    // Callers that own chrome (tests) can kill via returned handle if needed.
+    await closeChromeWithFallback(cdp, chrome);
+    cdp = null;
+    chrome = null;
     try {
       await spaceManager.save();
     } catch {

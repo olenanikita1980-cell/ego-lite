@@ -33,6 +33,7 @@ export type ChromeHandle = {
   cdpPort: number;
   userDataDir: string;
   kill(): Promise<void>;
+  waitForExit?(timeoutMs?: number): Promise<boolean>;
 };
 
 function isExecutable(filePath: string): boolean {
@@ -103,6 +104,22 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function waitForProcessExit(
+  pid: number,
+  timeoutMs: number,
+): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    try {
+      process.kill(pid, 0);
+      await sleep(50);
+    } catch {
+      return true;
+    }
+  }
+  return false;
+}
+
 function hasDisplayEnv(env: NodeJS.ProcessEnv = process.env): boolean {
   return Boolean(env.DISPLAY || env.WAYLAND_DISPLAY);
 }
@@ -149,6 +166,10 @@ function makeHandle(
     pid,
     cdpPort,
     userDataDir,
+    async waitForExit(timeoutMs = 3000) {
+      if (!pid || pid <= 0) return false;
+      return waitForProcessExit(pid, timeoutMs);
+    },
     async kill() {
       if (killed) return;
       killed = true;

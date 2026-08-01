@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { SpaceManager } from "./space-manager.js";
@@ -158,6 +158,22 @@ test("persist save/load round-trips spaces and selection", async () => {
     assert.equal(sm2.selected()?.ownership, "agentDelegatedToUser");
     assert.deepEqual(sm2.targetsForSelected(), ["pt1"]);
     assert.ok(sm2.list().find((s) => s.id === 1));
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("persist save writes with restricted file mode", async () => {
+  const dir = join(tmpdir(), `ego-space-mgr-mode-${process.pid}-${Date.now()}`);
+  await mkdir(dir, { recursive: true });
+  const path = join(dir, "spaces.json");
+  try {
+    const sm = new SpaceManager(path);
+    sm.createAgentSpace("secure");
+    await sm.save();
+
+    const info = await stat(path);
+    assert.equal(info.mode & 0o777, 0o600);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
