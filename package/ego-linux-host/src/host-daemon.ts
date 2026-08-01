@@ -439,16 +439,16 @@ export async function startDaemon(
       server.close(() => resolve());
     });
     await safeUnlink(socketPath);
-    if (options.writePid !== false) {
-      await safeUnlink(pidPath);
-    }
-    await closeChromeWithFallback(cdp, chrome);
-    cdp = null;
-    chrome = null;
     try {
       await spaceManager.save();
     } catch {
       // ignore
+    }
+    await closeChromeWithFallback(cdp, chrome);
+    cdp = null;
+    chrome = null;
+    if (options.writePid !== false) {
+      await safeUnlink(pidPath);
     }
   }
 

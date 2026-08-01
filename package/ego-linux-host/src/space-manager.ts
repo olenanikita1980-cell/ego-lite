@@ -1,28 +1,49 @@
+import { randomUUID } from "node:crypto";
 import { mkdir, open, readFile, rename, unlink } from "node:fs/promises";
 import { dirname } from "node:path";
 
 type PersistPayload = PersistShape;
 
 function mkTempPath(path: string): string {
-  return `${path}.${Date.now()}.${Math.random().toString(16).slice(2)}.tmp`;
+  return `${path}.${process.pid}.${randomUUID()}.tmp`;
 }
 
-async function writePersistAtomically(
+export type AtomicPersistHooks = {
+  /** Deterministic failpoint for crash-safety tests. */
+  beforeRename?: (tmpPath: string, targetPath: string) => Promise<void>;
+};
+
+export async function writePersistAtomically(
   path: string,
   payload: PersistPayload,
+  hooks: AtomicPersistHooks = {},
 ): Promise<void> {
   const tmpPath = mkTempPath(path);
   const text = JSON.stringify(payload, null, 2);
   const handle = await open(tmpPath, "wx", 0o600);
+  let handleOpen = true;
   try {
     await handle.writeFile(text, "utf8");
     await handle.sync();
+    await handle.close();
+    handleOpen = false;
+    await hooks.beforeRename?.(tmpPath, path);
     await rename(tmpPath, path);
-  } catch (err) {
+
+    // Persist the new directory entry as well as the file contents.
+    const directory = await open(dirname(path), "r");
     try {
-      await handle.close();
-    } catch {
-      // ignore
+      await directory.sync();
+    } finally {
+      await directory.close();
+    }
+  } catch (err) {
+    if (handleOpen) {
+      try {
+        await handle.close();
+      } catch {
+        // ignore
+      }
     }
     try {
       await unlink(tmpPath);
@@ -30,12 +51,6 @@ async function writePersistAtomically(
       // Best-effort cleanup only
     }
     throw err;
-  } finally {
-    try {
-      await handle.close();
-    } catch {
-      // ignore
-    }
   }
 }
 
