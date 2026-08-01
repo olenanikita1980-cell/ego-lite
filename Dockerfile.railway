@@ -1,0 +1,52 @@
+FROM node:22-bookworm-slim AS build
+
+ENV CI=true
+WORKDIR /app
+
+COPY package/ego-browser/package.json package/ego-browser/package-lock.json package/ego-browser/
+COPY package/ego-linux-host/package.json package/ego-linux-host/package-lock.json package/ego-linux-host/
+RUN npm ci --prefix package/ego-browser
+RUN npm ci --prefix package/ego-linux-host
+
+COPY package/ego-browser package/ego-browser
+COPY package/ego-linux-host package/ego-linux-host
+COPY skills skills
+
+RUN npm run build --prefix package/ego-browser
+RUN npm run build --prefix package/ego-linux-host
+RUN npm prune --omit=dev --prefix package/ego-browser
+RUN npm prune --omit=dev --prefix package/ego-linux-host
+
+FROM node:22-bookworm-slim AS runtime
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+      ca-certificates \
+      chromium \
+      fonts-liberation \
+      fonts-noto-color-emoji \
+      gosu \
+      tini \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --gid 10001 ego \
+    && useradd --uid 10001 --gid 10001 --create-home --home-dir /home/ego --shell /usr/sbin/nologin ego
+
+WORKDIR /app
+COPY --from=build /app/package/ego-browser package/ego-browser
+COPY --from=build /app/package/ego-linux-host package/ego-linux-host
+COPY --from=build /app/skills skills
+COPY scripts/railway-entrypoint.sh /usr/local/bin/ego-railway-entrypoint
+
+RUN chmod 0755 /usr/local/bin/ego-railway-entrypoint
+
+ENV HOME=/home/ego \
+    EGO_BROWSER_AGENT_WORKSPACE=/app/skills/ego-browser \
+    EGO_CHROME_PATH=/usr/bin/chromium \
+    EGO_CHROME_NO_SANDBOX=1 \
+    EGO_HEADLESS=1 \
+    EGO_RUNTIME_DIR=/run/ego-lite \
+    PORT=8080
+
+EXPOSE 8080
+ENTRYPOINT ["/usr/local/bin/ego-railway-entrypoint"]
+CMD ["node", "/app/package/ego-linux-host/bin/ego-linux-hostd.mjs", "run"]

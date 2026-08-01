@@ -4,26 +4,27 @@ No tranche is production-ready until its required rows have fresh evidence.
 
 | Area | Required behavior | Verification | State |
 | --- | --- | --- | --- |
-| Profile | Cookie survives daemon restart | login fixture, restart, authenticated assertion | pending |
-| Profile | Cookie survives Railway redeploy | volume-backed staging redeploy | pending |
-| Profile | localStorage and IndexedDB survive | write, restart, read | pending |
+| Profile | Cookie survives daemon restart | controlled fixture, restart, state assertion | passing locally (macOS Chrome + Linux Chromium) |
+| Profile | Cookie survives Railway redeploy | volume-backed staging redeploy | two-container volume model passes; live Railway pending |
+| Profile | localStorage and IndexedDB survive | write, restart, read | passing locally and across two containers sharing one volume |
 | Profile | failed shutdown does not silently reset profile | forced termination recovery test | pending |
-| Lifecycle | SIGTERM closes Chrome gracefully | integration test observes `Browser.close` and process exit | pending |
-| Lifecycle | stop is idempotent | repeated stop leaves no PID/socket/listener/process | pending |
-| Lifecycle | stale socket cannot spawn two daemons | concurrent-start adversarial test | pending |
-| Storage | task-space state write is atomic | injected write failure retains previous valid state | pending |
+| Lifecycle | SIGTERM closes Chrome gracefully | integration test observes `Browser.close` and process exit | passing unit + local container SIGTERM/profile re-open |
+| Lifecycle | stop is idempotent | repeated stop leaves no PID/socket/listener/process | passing unit; live `host:stop` on Railway pending |
+| Lifecycle | stop never signals an unverified PID | socket readiness and agreeing PID/lock are required | passing positive and negative unit tests |
+| Lifecycle | stale socket cannot spawn two daemons | concurrent-start adversarial test | passing lock/live-owner unit tests |
+| Storage | task-space state write is atomic | injected write failure retains previous valid state | passing unit |
 | Storage | backup restores usable profile | restore into staging and authenticate fixture | pending |
 | Isolation | Hermes cannot switch Codex's selected space | concurrent two-client test | blocked |
 | Isolation | CDP events only reach the owning client | adversarial event-routing test | blocked |
-| Security | raw CDP is unreachable externally | network probe against public/private interfaces | pending |
+| Security | raw CDP is unreachable externally | network probe against public/private interfaces | local image binds CDP to loopback and maps only health; live Railway pending |
 | Security | missing/invalid gateway token is rejected | API negative tests | blocked |
 | Security | logs do not contain cookies or credentials | redaction scan | pending |
 | Human handoff | MFA task pauses and can be resumed | authenticated visual takeover E2E | blocked |
-| Operations | run/status/stop report the same process tree | fresh container smoke | pending |
-| Operations | healthcheck distinguishes daemon from browser readiness | HTTP health/readiness tests | blocked |
+| Operations | run/status/stop report the same process tree | fresh container smoke | passing local container for run/status/SIGTERM; Railway pending |
+| Operations | healthcheck distinguishes daemon from browser readiness | HTTP health/readiness tests | passing unit + local container (`/readyz`, `/livez`, `/rpc` negative) |
 | Compatibility | existing ego-browser test suite passes | `npm test` in `package/ego-browser` | passing locally (299/299) |
-| Compatibility | Linux-host unit suite passes | `npm test` in `package/ego-linux-host` | passing outside restricted socket sandbox (101 pass, 1 Chrome E2E skipped) |
-| Runtime | real Linux Chromium smoke passes | title + snapshot + persisted state | pending |
+| Compatibility | Linux-host unit suite passes | `npm test` in `package/ego-linux-host` | passing locally (116 pass, 2 opt-in E2E skipped) |
+| Runtime | real Linux Chromium persistence smoke passes | controlled origin + persisted state | passing in built image, including two-container volume phases |
 | Railway | real staging deployment passes | build, health, volume, restart, redeploy evidence | pending |
 
 ## Promotion gates
