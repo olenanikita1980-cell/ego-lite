@@ -2395,6 +2395,10 @@ class WebRTCInput:
             self.keymap_watch_task = asyncio.create_task(self._keymap_watch_loop())
 
     async def _initialize_persistent_gamepads(self):
+        if not settings.gamepad_enabled[0]:
+            logger_webrtc_input.info("Gamepad support disabled; skipping persistent gamepad initialization.")
+            return
+
         logger_webrtc_input.info(f"Initializing {self.num_gamepads} persistent gamepad instances...")
         if not os.path.exists(self.js_socket_path_prefix):
             try:

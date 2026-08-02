@@ -70,6 +70,13 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Verify disabled gamepad surface stays inactive
+        run: >-
+          docker run --rm --entrypoint python3
+          -v "${{ github.workspace }}:/workspace:ro"
+          "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}"
+          /workspace/third_party/selkies/tests/test_gamepad_toggle.py
+
       - name: Verify persistent profile owner lock
         run: >-
           bash scripts/test-railway-owner-lock-container.sh
