@@ -21,9 +21,24 @@ RUN npm prune --omit=dev --prefix package/ego-linux-host
 
 FROM --platform=${SELKIES_BUILD_PLATFORM} ghcr.io/selkies-project/selkies/py-build:main@sha256:81b15a6889e39b9c0d10f23acfde21ff3ad1c357345f092ee0b071056f04dcfb AS selkies-build
 
+FROM node:22-bookworm-slim AS selkies-wheelhouse
+
+RUN DEBIAN_FRONTEND=noninteractive apt-get update \
+    && apt-get install -y --no-install-recommends \
+      build-essential \
+      libxkbcommon-dev \
+      python3-dev \
+      python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=selkies-build /opt/pypi/dist/selkies-0.0.0.dev0-py3-none-any.whl /tmp/selkies-0.0.0.dev0-py3-none-any.whl
+RUN python3 -m pip wheel --break-system-packages --no-cache-dir \
+      --wheel-dir /opt/selkies-wheels \
+      /tmp/selkies-0.0.0.dev0-py3-none-any.whl
+
 FROM node:22-bookworm-slim AS runtime
 
-RUN apt-get update \
+RUN DEBIAN_FRONTEND=noninteractive apt-get update \
     && apt-get install -y --no-install-recommends \
       ca-certificates \
       chromium \
@@ -45,7 +60,6 @@ RUN apt-get update \
       openbox \
       pulseaudio \
       python3 \
-      python3-dev \
       python3-pip \
       tini \
       wmctrl \
@@ -58,9 +72,11 @@ RUN apt-get update \
     && groupadd --gid 10001 ego \
     && useradd --uid 10001 --gid 10001 --create-home --home-dir /home/ego --shell /usr/sbin/nologin ego
 
-COPY --from=selkies-build /opt/pypi/dist/selkies-0.0.0.dev0-py3-none-any.whl /tmp/selkies-0.0.0.dev0-py3-none-any.whl
-RUN python3 -m pip install --break-system-packages --no-cache-dir --force-reinstall /tmp/selkies-0.0.0.dev0-py3-none-any.whl \
-    && rm -f /tmp/selkies-0.0.0.dev0-py3-none-any.whl
+COPY --from=selkies-wheelhouse /opt/selkies-wheels /tmp/selkies-wheels
+RUN python3 -m pip install --break-system-packages --no-cache-dir --force-reinstall \
+      --no-index --find-links=/tmp/selkies-wheels \
+      selkies==0.0.0.dev0 \
+    && rm -rf /tmp/selkies-wheels
 
 WORKDIR /app
 COPY --from=build /app/package/ego-browser package/ego-browser
