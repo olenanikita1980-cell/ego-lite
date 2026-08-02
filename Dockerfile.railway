@@ -1,3 +1,5 @@
+ARG SELKIES_BUILD_PLATFORM=linux/amd64
+
 FROM node:22-bookworm-slim AS build
 
 ENV CI=true
@@ -17,35 +19,97 @@ RUN npm run build --prefix package/ego-linux-host
 RUN npm prune --omit=dev --prefix package/ego-browser
 RUN npm prune --omit=dev --prefix package/ego-linux-host
 
+FROM --platform=${SELKIES_BUILD_PLATFORM} ghcr.io/selkies-project/selkies/py-build:main@sha256:81b15a6889e39b9c0d10f23acfde21ff3ad1c357345f092ee0b071056f04dcfb AS selkies-build
+
 FROM node:22-bookworm-slim AS runtime
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
       ca-certificates \
       chromium \
+      curl \
+      dbus-x11 \
       fonts-liberation \
       fonts-noto-color-emoji \
       gosu \
+      libdrm2 \
+      libgl1 \
+      libpulse0 \
+      libx11-xcb1 \
+      libxcb-dri3-0 \
+      libxdamage1 \
+      libxext6 \
+      libxfixes3 \
+      libxkbcommon0 \
+      libxtst6 \
+      openbox \
+      pulseaudio \
+      python3 \
+      python3-dev \
+      python3-pip \
       tini \
+      wmctrl \
+      x11-utils \
+      x11-xkb-utils \
+      x11-xserver-utils \
+      xserver-xorg-core \
+      xvfb \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --gid 10001 ego \
     && useradd --uid 10001 --gid 10001 --create-home --home-dir /home/ego --shell /usr/sbin/nologin ego
+
+COPY --from=selkies-build /opt/pypi/dist/selkies-0.0.0.dev0-py3-none-any.whl /tmp/selkies.whl
+RUN python3 -m pip install --break-system-packages --no-cache-dir --force-reinstall /tmp/selkies.whl \
+    && rm -f /tmp/selkies.whl
 
 WORKDIR /app
 COPY --from=build /app/package/ego-browser package/ego-browser
 COPY --from=build /app/package/ego-linux-host package/ego-linux-host
 COPY --from=build /app/skills skills
 COPY scripts/railway-entrypoint.sh /usr/local/bin/ego-railway-entrypoint
+COPY scripts/railway-selkies-supervisor.sh /usr/local/bin/ego-railway-selkies-supervisor
+COPY scripts/selkies-token-bootstrap.mjs /usr/local/libexec/ego-selkies-token-bootstrap.mjs
+COPY THIRD_PARTY_NOTICES.md /usr/share/doc/ego-lite/THIRD_PARTY_NOTICES.md
 
-RUN chmod 0755 /usr/local/bin/ego-railway-entrypoint
+RUN chmod 0755 \
+      /usr/local/bin/ego-railway-entrypoint \
+      /usr/local/bin/ego-railway-selkies-supervisor \
+    && chmod 0644 /usr/local/libexec/ego-selkies-token-bootstrap.mjs
 
 ENV HOME=/home/ego \
+    DISPLAY=:99 \
     EGO_BROWSER_AGENT_WORKSPACE=/app/skills/ego-browser \
     EGO_CHROME_PATH=/usr/bin/chromium \
     EGO_CHROME_NO_SANDBOX=1 \
-    EGO_HEADLESS=1 \
+    EGO_HEADLESS=0 \
     EGO_RUNTIME_DIR=/run/ego-lite \
+    EGO_VISUAL_MODE=selkies \
+    EGO_VIEWER_WIDTH=1920 \
+    EGO_VIEWER_HEIGHT=1080 \
+    EGO_INTERNAL_HEALTH_PORT=8082 \
+    SELKIES_ADDR=0.0.0.0 \
+    SELKIES_MODE=websockets \
+    SELKIES_ENABLE_DUAL_MODE=false \
+    SELKIES_ENABLE_HTTPS=false \
+    SELKIES_ENABLE_RESIZE=false \
+    SELKIES_IS_MANUAL_RESOLUTION_MODE=true \
+    SELKIES_USE_CPU=true \
+    SELKIES_COMMAND_ENABLED=false \
+    SELKIES_FILE_TRANSFERS=none \
+    SELKIES_MICROPHONE_ENABLED=false \
+    SELKIES_GAMEPAD_ENABLED=false \
+    SELKIES_ENABLE_SHARING=false \
+    SELKIES_ENABLE_COLLAB=false \
+    SELKIES_ENABLE_SHARED=false \
+    SELKIES_FRAMERATE=60,15-60 \
+    SELKIES_UI_TITLE="Ego Lite" \
+    SELKIES_UI_SHOW_LOGO=false \
     PORT=8080
+
+LABEL org.opencontainers.image.source="https://github.com/citrolabs/ego-lite" \
+      org.opencontainers.image.description="Ego Lite Linux host with a Selkies visual-control surface" \
+      org.opencontainers.image.licenses="MIT AND MPL-2.0" \
+      org.opencontainers.image.selkies.build-digest="sha256:81b15a6889e39b9c0d10f23acfde21ff3ad1c357345f092ee0b071056f04dcfb"
 
 EXPOSE 8080
 ENTRYPOINT ["/usr/local/bin/ego-railway-entrypoint"]

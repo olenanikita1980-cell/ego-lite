@@ -36,6 +36,12 @@ test("buildChromeArgs keeps CDP local and makes no-sandbox explicit", () => {
   assert.ok(containerFallback.includes("--no-sandbox"));
 });
 
+test("buildChromeArgs maximizes headed sessions for the visual viewer", () => {
+  const headed = buildChromeArgs(baseConfig({ headless: false }));
+  assert.ok(headed.includes("--start-maximized"));
+  assert.ok(!headed.includes("--headless=new"));
+});
+
 test("resolveChromePath prefers EGO_CHROME_PATH when executable", async () => {
   const dir = join(tmpdir(), `ego-chrome-${process.pid}`);
   await mkdir(dir, { recursive: true });

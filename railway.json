@@ -5,15 +5,18 @@
     "dockerfilePath": "Dockerfile.railway",
     "watchPatterns": [
       "Dockerfile.railway",
+      "THIRD_PARTY_NOTICES.md",
       "railway.json",
       "scripts/railway-entrypoint.sh",
+      "scripts/railway-selkies-supervisor.sh",
+      "scripts/selkies-token-bootstrap.mjs",
       "package/ego-browser/**",
       "package/ego-linux-host/**",
       "skills/ego-browser/**"
     ]
   },
   "deploy": {
-    "healthcheckPath": "/readyz",
+    "healthcheckPath": "/api/health",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10,

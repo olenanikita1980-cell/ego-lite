@@ -193,6 +193,8 @@ export function buildChromeArgs(config: HostConfig): string[] {
   ];
   if (config.headless) {
     args.push("--headless=new");
+  } else {
+    args.push("--start-maximized");
   }
   if (config.noSandbox) {
     args.push("--no-sandbox");

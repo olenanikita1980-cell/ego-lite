@@ -1,8 +1,10 @@
 # Railway deployment runbook
 
-This runbook deploys the Linux host as a **single-owner persistent browser**.
-It is suitable when Hermes, Codex, and Claude Code execute inside the same
-container and call the local `ego-browser` shim.
+This runbook deploys the Linux host as a **single-owner persistent browser**
+with a token-protected Selkies visual surface. It is suitable when Hermes,
+Codex, and Claude Code execute inside the same container and call the local
+`ego-browser` shim. Read [`SELKIES.md`](./SELKIES.md) before enabling a public
+domain or human controller token.
 
 It does not expose browser control over HTTP. Agents running in other Railway
 services need the authenticated, client-isolated gateway described as a
@@ -19,13 +21,21 @@ port 9222 or the Unix socket through a TCP proxy.
 5. Set `RAILWAY_SHM_SIZE_BYTES=268435456` (256 MiB) or larger.
 6. Allocate at least 1 GiB RAM; 2 GiB is the safer starting point for several
    tabs.
-7. Keep the healthcheck at `/readyz`. `/livez` only proves that the control
-   process is alive; `/readyz` additionally requires the local CDP endpoint.
+7. Keep Railway's public healthcheck at Selkies `/api/health`. The Ego host
+   `/livez` and `/readyz` endpoints are loopback-only on the internal health
+   port; `/readyz` additionally requires the local CDP endpoint and gates
+   Selkies startup.
 8. Use a static outbound IP when a target system allowlists source IPs.
 9. Enable volume backups and prove a restore in staging before relying on them.
-10. Do not generate a public domain for this same-container-only service. The
-    health listener must be reachable by Railway's deployment healthcheck, but
-    it is not an authenticated browser-control interface.
+10. Set distinct strong `SELKIES_MASTER_TOKEN`,
+    `EGO_VIEWER_CONTROLLER_TOKEN`, and optional
+    `EGO_VIEWER_VIEWER_TOKEN` secrets (minimum 32 characters each).
+11. Generate a public Railway domain only after token negative tests pass. The
+    public route is Selkies, not CDP or the Unix socket.
+12. Confirm the public `/api/health` probe and internal `/readyz` gate both
+    recover after a staged restart before attaching a customer profile.
+13. Allocate at least 2 vCPU / 4 GiB RAM for staging; 4 vCPU / 8 GiB is the
+    safer 1080p/60 starting point for Chromium plus software H.264 encoding.
 
 The image derives durable paths from Railway's injected volume mount:
 
@@ -35,6 +45,7 @@ The image derives durable paths from Railway's injected volume mount:
 /run/ego-lite/host.sock    runtime-only local RPC
 /run/ego-lite/host.pid     runtime-only process identity
 /run/ego-lite/host.lock    singleton ownership
+/run/ego-lite/*.log        runtime-only Xvfb/Openbox/Pulse/Selkies logs
 ```
 
 The image defaults to `EGO_CHROME_NO_SANDBOX=1` because managed containers
@@ -81,8 +92,9 @@ fixture and record the deployment id plus volume id.
 
 Website-owned sessions can still expire, be revoked, demand MFA, or reject a
 datacenter IP. Persistent storage cannot guarantee permanent authentication.
-A private visual takeover surface is still required for reauthentication and
-CAPTCHA recovery.
+The Selkies controller supplies visual input for reauthentication and CAPTCHA
+recovery, but the automatic agent/human control lease is still required before
+production concurrency.
 
 The repository also includes an opt-in controlled-origin test at
 `package/ego-linux-host/src/persistence-e2e.test.ts`. Its default mode restarts

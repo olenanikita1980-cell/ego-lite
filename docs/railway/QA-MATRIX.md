@@ -17,14 +17,21 @@ No tranche is production-ready until its required rows have fresh evidence.
 | Isolation | Hermes cannot switch Codex's selected space | concurrent two-client test | blocked |
 | Isolation | CDP events only reach the owning client | adversarial event-routing test | blocked |
 | Security | raw CDP is unreachable externally | network probe against public/private interfaces | local image binds CDP to loopback and maps only health; live Railway pending |
-| Security | missing/invalid gateway token is rejected | API negative tests | blocked |
+| Security | weak or missing Selkies secrets fail startup | local negative configuration test | passing locally |
+| Security | missing/invalid viewer token is rejected | live WebSocket negative test | pending |
+| Security | viewer token cannot send keyboard/mouse input | live role negative test | pending |
 | Security | logs do not contain cookies or credentials | redaction scan | pending |
-| Human handoff | MFA task pauses and can be resumed | authenticated visual takeover E2E | blocked |
+| Human handoff | observer iframe sees the agent browser | authenticated Selkies iframe E2E | pending |
+| Human handoff | MFA task pauses and can be resumed | `handOffTaskSpace` + controller + `takeOverTaskSpace` E2E | pending |
+| Human handoff | controller access automatically owns a task lease | gateway integration E2E | blocked |
 | Operations | run/status/stop report the same process tree | fresh container smoke | passing local container for run/status/SIGTERM; Railway pending |
-| Operations | healthcheck distinguishes daemon from browser readiness | HTTP health/readiness tests | passing unit + local container (`/readyz`, `/livez`, `/rpc` negative) |
-| Compatibility | existing ego-browser test suite passes | `npm test` in `package/ego-browser` | passing locally (299/299) |
-| Compatibility | Linux-host unit suite passes | `npm test` in `package/ego-linux-host` | passing locally (116 pass, 2 opt-in E2E skipped) |
+| Operations | healthcheck distinguishes daemon from browser readiness | internal Ego `/readyz` plus public Selkies `/api/health` probes | Ego unit/local container passing; Selkies image and Railway probe pending |
+| Compatibility | existing ego-browser test suite passes | `npm test` in `package/ego-browser` | passing locally (311/311) |
+| Compatibility | Linux-host unit suite passes | `npm test` in `package/ego-linux-host` | passing locally (118 pass, 2 opt-in E2E skipped) |
 | Runtime | real Linux Chromium persistence smoke passes | controlled origin + persisted state | passing in built image, including two-container volume phases |
+| Selkies | configuration, secret redaction, and port conflicts are checked | `bash scripts/test-railway-selkies.sh` | passing locally |
+| Selkies | pinned linux/amd64 image builds | Docker/Railway build | pending (local Docker disk full) |
+| Selkies | 1080p interaction has acceptable latency and visual quality | browser iframe + stats capture | pending |
 | Railway | real staging deployment passes | build, health, volume, restart, redeploy evidence | pending |
 
 ## Promotion gates

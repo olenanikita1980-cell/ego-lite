@@ -1,8 +1,10 @@
 # Railway persistent browser architecture
 
-Status: the single-container persistence tranche is implemented and under
-verification. Remote multi-agent execution remains blocked until the
-client-isolation and gateway gates below are implemented and verified.
+Status: the single-container persistence tranche and a token-protected Selkies
+visual surface are implemented in the container definition and under
+verification. Remote multi-agent execution and automatic human/agent control
+leasing remain blocked until the client-isolation and gateway gates below are
+implemented and verified.
 
 ## Goal
 
@@ -18,7 +20,7 @@ must support a human handoff.
 ## Runtime shape
 
 ```text
-supported now (one container)
+supported by the container definition (live Railway proof pending)
 
 Hermes / Codex / Claude Code
         |
@@ -32,6 +34,8 @@ ego-browser shim -> local Unix socket -> ego Linux host daemon
                                   Railway volume mounted at /data
                                     /data/ego-lite/profile
                                     /data/ego-lite/spaces.json
+
+OnixDesk iframe -> Selkies token -> Xvfb/Openbox -> the same Chromium process
 
 future multi-service mode
 
@@ -110,11 +114,13 @@ local storage, service workers, and account selection. The gateway must expose
 this limitation and serialize conflicting account/domain work unless a future
 BrowserContext adapter is added.
 
-### P1: no human takeover surface on Railway
+### Partially resolved: token-protected human visual surface
 
-The local implementation assumes a headed Linux display. Railway needs a
-private, authenticated visual-control surface before MFA/CAPTCHA recovery can
-be considered usable.
+The Selkies tranche supplies a headed Linux display, read-only observer token,
+and human controller token without publishing CDP. It is not yet a complete
+handoff gateway: Selkies cannot change `SpaceManager` ownership itself, so
+`handOffTaskSpace` / `takeOverTaskSpace` must bracket controller access. See
+[`SELKIES.md`](./SELKIES.md).
 
 ## Contribution strategy
 
