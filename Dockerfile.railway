@@ -114,6 +114,7 @@ COPY --from=build /app/skills skills
 COPY scripts/railway-entrypoint.sh /usr/local/bin/ego-railway-entrypoint
 COPY scripts/railway-selkies-supervisor.sh /usr/local/bin/ego-railway-selkies-supervisor
 COPY scripts/selkies-token-bootstrap.mjs /usr/local/libexec/ego-selkies-token-bootstrap.mjs
+COPY config/chromium-policies /etc/chromium/policies/managed
 COPY THIRD_PARTY_NOTICES.md /usr/share/doc/ego-lite/THIRD_PARTY_NOTICES.md
 
 RUN chmod 0755 \

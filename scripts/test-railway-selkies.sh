@@ -7,6 +7,7 @@ supervisor="$repo_root/scripts/railway-selkies-supervisor.sh"
 bootstrap="$repo_root/scripts/selkies-token-bootstrap.mjs"
 selkies_upstream="$repo_root/third_party/selkies/UPSTREAM.md"
 selkies_stream_server="$repo_root/third_party/selkies/src/selkies/stream_server.py"
+chromium_policy="$repo_root/config/chromium-policies/ego-lite.json"
 
 bash -n "$entrypoint"
 bash -n "$supervisor"
@@ -51,6 +52,8 @@ grep -q '/api/health' "$selkies_stream_server"
 grep -q '/api/tokens' "$selkies_stream_server"
 grep -q 'chromium-sandbox' "$repo_root/Dockerfile.railway"
 grep -q 'EGO_CHROME_NO_SANDBOX=0' "$repo_root/Dockerfile.railway"
+grep -q 'config/chromium-policies' "$repo_root/Dockerfile.railway"
+jq -e '.CommandLineFlagSecurityWarningsEnabled == false' "$chromium_policy" >/dev/null
 
 master="master-0123456789abcdefghijklmnopqrstuvwxyz"
 controller="controller-0123456789abcdefghijklmnopqrstuv"

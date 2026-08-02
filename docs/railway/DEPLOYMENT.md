@@ -55,6 +55,11 @@ each target container runtime. If a runtime blocks the SUID sandbox, setting
 `EGO_CHROME_NO_SANDBOX=1` is an explicit compatibility fallback with a material
 security trade-off; it must not be enabled silently.
 
+The image also installs a machine policy that suppresses Chromium's persistent
+command-line security-warning banner. This is UI-only: it does not re-enable a
+blocked sandbox or reduce the need to record `EGO_CHROME_NO_SANDBOX=1` as an
+explicit runtime exception.
+
 ## Controls
 
 From a Railway shell in the running service:
