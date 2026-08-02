@@ -60,6 +60,12 @@ command-line security-warning banner. This is UI-only: it does not re-enable a
 blocked sandbox or reduce the need to record `EGO_CHROME_NO_SANDBOX=1` as an
 explicit runtime exception.
 
+The 2026-08-02 Railway staging acceptance test exercised the safe default first.
+Chromium exited with `SIGTRAP` in that runtime, so staging explicitly records
+`EGO_CHROME_NO_SANDBOX=1`. The image itself still defaults to
+`EGO_CHROME_NO_SANDBOX=0`; do not copy the staging exception to a different
+runtime without reproducing the sandbox smoke test there.
+
 ## Controls
 
 From a Railway shell in the running service:

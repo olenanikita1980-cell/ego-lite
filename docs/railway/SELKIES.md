@@ -1,8 +1,10 @@
 # Selkies visual-control surface
 
-Status: implemented in the container definition; local configuration checks
-pass. The full `linux/amd64` image build and live Railway proof remain release
-gates.
+Status: running in the Railway `staging` environment. The immutable
+`linux/amd64` image built from `3ae4f294997db92cf2cc016c2feadf2e59a427ba`
+is deployed as digest
+`sha256:39c399b958f8a172ee265523da0e31cbe964b3962455f7e38efe962d3fccb734`.
+This is staging evidence, not a production promotion.
 
 ## What this surface shows
 
@@ -92,6 +94,32 @@ Automating that lease is a separate gateway tranche. Until it exists, do not
 allow the human controller and agent to send concurrent input. The viewer token
 is safe for observation while the agent works.
 
+## Live staging evidence
+
+The controlled Railway acceptance run on 2026-08-02 UTC recorded:
+
+- deployment `880116fe-3b5a-47af-a2e1-57ef35450ab4` reached `SUCCESS` with one
+  replica, `overlapSeconds=0`, health path `/api/health`, and the volume mounted
+  at `/data`;
+- public `/api/health` returned 200, while `POST /api/tokens` without the master
+  credential returned 401;
+- an invalid streaming token was closed with WebSocket code 4001, and the two
+  provisioned client tokens were reported as `controller` and `viewer`;
+- a controlled-origin cookie, localStorage item, and IndexedDB record written
+  before container replacement were all read from the final deployment;
+- a 1920x1080 Playwright capture showed the streamed headed Chromium, with zero
+  browser-console errors and warnings;
+- a safe log scan found no master, controller, or viewer token value or fatal
+  startup marker, and confirmed disabled gamepad initialization was skipped.
+
+The token-free command transcript and immutable identifiers are recorded in
+[`evidence/2026-08-02-staging.md`](./evidence/2026-08-02-staging.md).
+
+The live browser used a controlled fixture only. No customer account or
+customer authentication data was used. Viewer-role input denial, backup
+restore, automatic human/agent leases, quantitative latency, and forced-kill
+profile recovery remain separate gates.
+
 ## Security defaults
 
 - raw CDP stays on `127.0.0.1` and is never routed publicly;
@@ -107,6 +135,12 @@ is safe for observation while the agent works.
 - the upstream Selkies source is vendored at an exact commit, its frontend
   dependencies are locked, and provenance is documented in
   `THIRD_PARTY_NOTICES.md`.
+
+Railway staging currently needs the explicit `EGO_CHROME_NO_SANDBOX=1`
+compatibility fallback after its runtime terminated sandboxed Chromium with
+`SIGTRAP`. The image default remains sandboxed. The managed Chromium policy
+only removes the persistent warning banner; it does not restore sandboxing or
+reduce this exception's security impact.
 
 Clipboard and audio remain enabled for normal browsing. Disable clipboard with
 `SELKIES_ENABLE_CLIPBOARD=false` if the target environment has stricter data
