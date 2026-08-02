@@ -48,7 +48,7 @@ container replacement.
 1. One Railway service replica owns one profile volume. Chromium profile
    directories are single-writer resources.
 2. Chromium runs as a non-root user; raw CDP listens on loopback only.
-3. Browser state lives under `/data/profile`; deployment/runtime state does not.
+3. Browser state lives under `/data/ego-lite/profile`; deployment/runtime state does not.
 4. Shutdown persists task-space state atomically, asks Chrome to close through
    CDP, and uses process termination only as a bounded fallback. Draining
    in-flight RPC is still a required lifecycle gate.
