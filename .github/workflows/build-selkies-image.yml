@@ -13,6 +13,7 @@ on:
       - scripts/railway-entrypoint.sh
       - scripts/railway-selkies-supervisor.sh
       - scripts/selkies-token-bootstrap.mjs
+      - scripts/test-railway-owner-lock-container.sh
       - skills/ego-browser/**
       - third_party/selkies/**
   workflow_dispatch:
@@ -68,3 +69,8 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Verify persistent profile owner lock
+        run: >-
+          bash scripts/test-railway-owner-lock-container.sh
+          "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}"

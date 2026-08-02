@@ -12,6 +12,7 @@ No tranche is production-ready until its required rows have fresh evidence.
 | Lifecycle | stop is idempotent | repeated stop leaves no PID/socket/listener/process | passing unit; live `host:stop` on Railway pending |
 | Lifecycle | stop never signals an unverified PID | socket readiness and agreeing PID/lock are required | passing positive and negative unit tests |
 | Lifecycle | stale socket cannot spawn two daemons | concurrent-start adversarial test | passing lock/live-owner unit tests |
+| Lifecycle | stale Chromium singleton links do not block a replacement container | owner lock plus exact-link cleanup test; every unexpected non-symlink is preserved and fails closed | passing locally; live Railway redeploy pending |
 | Storage | task-space state write is atomic | injected write failure retains previous valid state | passing unit |
 | Storage | backup restores usable profile | restore into staging and authenticate fixture | pending |
 | Isolation | Hermes cannot switch Codex's selected space | concurrent two-client test | blocked |
@@ -30,7 +31,7 @@ No tranche is production-ready until its required rows have fresh evidence.
 | Compatibility | Linux-host unit suite passes | `npm test` in `package/ego-linux-host` | passing locally (118 pass, 2 opt-in E2E skipped) |
 | Runtime | real Linux Chromium persistence smoke passes | controlled origin + persisted state | passing in built image, including two-container volume phases |
 | Selkies | configuration, secret redaction, and port conflicts are checked | `bash scripts/test-railway-selkies.sh` | passing locally |
-| Selkies | vendored pinned source builds for linux/amd64 | Docker/Railway build | pending (live Railway rebuild in progress) |
+| Selkies | vendored pinned source builds for linux/amd64 | Docker/Railway build | passing GitHub Actions image build; Railway runtime pending |
 | Selkies | 1080p interaction has acceptable latency and visual quality | browser iframe + stats capture | pending |
 | Railway | real staging deployment passes | build, health, volume, restart, redeploy evidence | pending |
 

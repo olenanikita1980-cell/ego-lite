@@ -2,14 +2,49 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+entrypoint="$repo_root/scripts/railway-entrypoint.sh"
 supervisor="$repo_root/scripts/railway-selkies-supervisor.sh"
 bootstrap="$repo_root/scripts/selkies-token-bootstrap.mjs"
 selkies_upstream="$repo_root/third_party/selkies/UPSTREAM.md"
 selkies_stream_server="$repo_root/third_party/selkies/src/selkies/stream_server.py"
 
-bash -n "$repo_root/scripts/railway-entrypoint.sh"
+bash -n "$entrypoint"
 bash -n "$supervisor"
 node --test "$repo_root/scripts/selkies-token-bootstrap.test.mjs"
+
+EGO_RAILWAY_ENTRYPOINT_SOURCE_ONLY=1 source "$entrypoint"
+lock_test_root="$(mktemp -d "${TMPDIR:-/tmp}/ego-profile-locks.XXXXXX")"
+trap 'rm -rf -- "$lock_test_root"' EXIT
+touch "$lock_test_root/Preferences"
+ln -s "old-host-123" "$lock_test_root/SingletonLock"
+ln -s "/tmp/old-cookie" "$lock_test_root/SingletonCookie"
+ln -s "/tmp/old-socket" "$lock_test_root/SingletonSocket"
+cleanup_chromium_singleton_links "$lock_test_root" >/dev/null 2>&1
+[[ -f "$lock_test_root/Preferences" ]]
+[[ ! -e "$lock_test_root/SingletonLock" && ! -L "$lock_test_root/SingletonLock" ]]
+[[ ! -e "$lock_test_root/SingletonCookie" && ! -L "$lock_test_root/SingletonCookie" ]]
+[[ ! -e "$lock_test_root/SingletonSocket" && ! -L "$lock_test_root/SingletonSocket" ]]
+
+for singleton_name in SingletonCookie SingletonLock SingletonSocket; do
+  touch "$lock_test_root/$singleton_name"
+  for sibling_name in SingletonCookie SingletonLock SingletonSocket; do
+    if [[ "$sibling_name" != "$singleton_name" ]]; then
+      ln -s "/tmp/must-remain-${sibling_name}" "$lock_test_root/$sibling_name"
+    fi
+  done
+  set +e
+  cleanup_chromium_singleton_links "$lock_test_root" >/dev/null 2>&1
+  cleanup_status=$?
+  set -e
+  [[ "$cleanup_status" -eq 73 ]]
+  [[ -f "$lock_test_root/$singleton_name" ]]
+  for sibling_name in SingletonCookie SingletonLock SingletonSocket; do
+    if [[ "$sibling_name" != "$singleton_name" ]]; then
+      [[ -L "$lock_test_root/$sibling_name" ]]
+    fi
+  done
+  rm "$lock_test_root/SingletonCookie" "$lock_test_root/SingletonLock" "$lock_test_root/SingletonSocket"
+done
 
 grep -q '877cf202b4955d8477041c7831d4b34ebdb92d16' "$selkies_upstream"
 grep -q '/api/health' "$selkies_stream_server"

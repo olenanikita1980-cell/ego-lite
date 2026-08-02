@@ -53,13 +53,21 @@ container replacement.
    directories are single-writer resources.
 2. Chromium runs as a non-root user; raw CDP listens on loopback only.
 3. Browser state lives under `/data/ego-lite/profile`; deployment/runtime state does not.
-4. Shutdown persists task-space state atomically, asks Chrome to close through
+4. On container startup, the Railway entrypoint reclaims only Chromium's three
+   Linux singleton symlinks (`SingletonCookie`, `SingletonLock`, and
+   `SingletonSocket`). They encode the previous container host and otherwise
+   make Chromium report `PROFILE_IN_USE` after a volume moves between hosts.
+   Any unexpected non-symlink at one of those exact paths stops startup instead
+   of being deleted; all profile databases and settings remain untouched. A
+   persistent advisory owner lock is held for the entire container lifetime,
+   so cleanup cannot run while another cooperating container owns the profile.
+5. Shutdown persists task-space state atomically, asks Chrome to close through
    CDP, and uses process termination only as a bounded fallback. Draining
    in-flight RPC is still a required lifecycle gate.
-5. The public gateway never exposes port 9222 or arbitrary unauthenticated CDP.
-6. The existing `ego-browser` helper interface remains stable. The Linux host is
+6. The public gateway never exposes port 9222 or arbitrary unauthenticated CDP.
+7. The existing `ego-browser` helper interface remains stable. The Linux host is
    a separate adapter for the open `globalThis.ego` seam.
-7. The original PR #134 commits retain their original author metadata.
+8. The original PR #134 commits retain their original author metadata.
 
 ## Architecture findings in PR #134
 

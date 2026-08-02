@@ -25,6 +25,14 @@ The persistent profile, cookies, local storage, IndexedDB, and settings remain
 under `/data/ego-lite/profile`. The visual runtime, X11 socket, process ids, and
 logs stay under `/run/ego-lite` and are recreated with every container.
 
+Chromium also writes three Linux singleton symlinks inside the profile. They
+contain container-local host/socket ownership and are not durable browser data.
+The Railway entrypoint removes only those stale symlinks before Chromium starts;
+it preserves the rest of the profile and refuses to remove an unexpected
+non-symlink at the same names. It first acquires a persistent advisory owner
+lock and holds that lock for the full container lifetime, preventing a second
+cooperating container from reclaiming a profile that is still active.
+
 ## Railway transport choice
 
 The Railway image locks Selkies to its WebSocket/WebCodecs transport. It uses a
