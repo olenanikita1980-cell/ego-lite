@@ -58,9 +58,9 @@ RUN apt-get update \
     && groupadd --gid 10001 ego \
     && useradd --uid 10001 --gid 10001 --create-home --home-dir /home/ego --shell /usr/sbin/nologin ego
 
-COPY --from=selkies-build /opt/pypi/dist/selkies-0.0.0.dev0-py3-none-any.whl /tmp/selkies.whl
-RUN python3 -m pip install --break-system-packages --no-cache-dir --force-reinstall /tmp/selkies.whl \
-    && rm -f /tmp/selkies.whl
+COPY --from=selkies-build /opt/pypi/dist/selkies-0.0.0.dev0-py3-none-any.whl /tmp/selkies-0.0.0.dev0-py3-none-any.whl
+RUN python3 -m pip install --break-system-packages --no-cache-dir --force-reinstall /tmp/selkies-0.0.0.dev0-py3-none-any.whl \
+    && rm -f /tmp/selkies-0.0.0.dev0-py3-none-any.whl
 
 WORKDIR /app
 COPY --from=build /app/package/ego-browser package/ego-browser
