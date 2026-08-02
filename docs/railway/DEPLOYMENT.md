@@ -48,13 +48,12 @@ The image derives durable paths from Railway's injected volume mount:
 /run/ego-lite/*.log        runtime-only Xvfb/Openbox/Pulse/Selkies logs
 ```
 
-The image defaults to `EGO_CHROME_NO_SANDBOX=1` because managed containers
-usually do not expose the kernel facilities Chromium needs for its own sandbox.
-Chromium still runs as the unprivileged `ego` user, but disabling its internal
-sandbox is a real security trade-off. The minimal image does not install the
-optional Debian `chromium-sandbox` package; enabling Chromium's internal
-sandbox therefore requires a separately reviewed image change and a staging
-smoke, not only changing this environment variable.
+The image installs Debian's `chromium-sandbox` package and defaults to
+`EGO_CHROME_NO_SANDBOX=0`, so Chromium keeps its internal sandbox while still
+running as the unprivileged `ego` user. This requires a real staging smoke in
+each target container runtime. If a runtime blocks the SUID sandbox, setting
+`EGO_CHROME_NO_SANDBOX=1` is an explicit compatibility fallback with a material
+security trade-off; it must not be enabled silently.
 
 ## Controls
 

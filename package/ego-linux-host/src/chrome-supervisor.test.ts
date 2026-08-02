@@ -39,6 +39,7 @@ test("buildChromeArgs keeps CDP local and makes no-sandbox explicit", () => {
 test("buildChromeArgs maximizes headed sessions for the visual viewer", () => {
   const headed = buildChromeArgs(baseConfig({ headless: false }));
   assert.ok(headed.includes("--start-maximized"));
+  assert.ok(headed.includes("--hide-crash-restore-bubble"));
   assert.ok(!headed.includes("--headless=new"));
 });
 

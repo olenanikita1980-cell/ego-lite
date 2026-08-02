@@ -69,6 +69,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update \
     && apt-get install -y --no-install-recommends \
       ca-certificates \
       chromium \
+      chromium-sandbox \
       curl \
       dbus-x11 \
       fonts-liberation \
@@ -124,7 +125,7 @@ ENV HOME=/home/ego \
     DISPLAY=:99 \
     EGO_BROWSER_AGENT_WORKSPACE=/app/skills/ego-browser \
     EGO_CHROME_PATH=/usr/bin/chromium \
-    EGO_CHROME_NO_SANDBOX=1 \
+    EGO_CHROME_NO_SANDBOX=0 \
     EGO_HEADLESS=0 \
     EGO_RUNTIME_DIR=/run/ego-lite \
     EGO_VISUAL_MODE=selkies \

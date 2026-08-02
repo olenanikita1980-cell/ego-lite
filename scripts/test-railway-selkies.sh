@@ -49,6 +49,8 @@ done
 grep -q '877cf202b4955d8477041c7831d4b34ebdb92d16' "$selkies_upstream"
 grep -q '/api/health' "$selkies_stream_server"
 grep -q '/api/tokens' "$selkies_stream_server"
+grep -q 'chromium-sandbox' "$repo_root/Dockerfile.railway"
+grep -q 'EGO_CHROME_NO_SANDBOX=0' "$repo_root/Dockerfile.railway"
 
 master="master-0123456789abcdefghijklmnopqrstuvwxyz"
 controller="controller-0123456789abcdefghijklmnopqrstuv"

@@ -190,6 +190,7 @@ export function buildChromeArgs(config: HostConfig): string[] {
     "--remote-debugging-address=127.0.0.1",
     "--no-first-run",
     "--no-default-browser-check",
+    "--hide-crash-restore-bubble",
   ];
   if (config.headless) {
     args.push("--headless=new");
