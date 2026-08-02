@@ -4,10 +4,16 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 supervisor="$repo_root/scripts/railway-selkies-supervisor.sh"
 bootstrap="$repo_root/scripts/selkies-token-bootstrap.mjs"
+selkies_upstream="$repo_root/third_party/selkies/UPSTREAM.md"
+selkies_stream_server="$repo_root/third_party/selkies/src/selkies/stream_server.py"
 
 bash -n "$repo_root/scripts/railway-entrypoint.sh"
 bash -n "$supervisor"
 node --test "$repo_root/scripts/selkies-token-bootstrap.test.mjs"
+
+grep -q '877cf202b4955d8477041c7831d4b34ebdb92d16' "$selkies_upstream"
+grep -q '/api/health' "$selkies_stream_server"
+grep -q '/api/tokens' "$selkies_stream_server"
 
 master="master-0123456789abcdefghijklmnopqrstuvwxyz"
 controller="controller-0123456789abcdefghijklmnopqrstuv"

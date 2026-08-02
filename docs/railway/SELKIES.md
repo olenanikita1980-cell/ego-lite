@@ -96,8 +96,9 @@ is safe for observation while the agent works.
 - the 1920x1080 display is fixed and software-encoded for Railway's CPU-only
   runtime; the iframe scales that stream without resizing the persistent
   browser process;
-- the upstream Selkies build is pinned by immutable OCI digest and documented
-  in `THIRD_PARTY_NOTICES.md`.
+- the upstream Selkies source is vendored at an exact commit, its frontend
+  dependencies are locked, and provenance is documented in
+  `THIRD_PARTY_NOTICES.md`.
 
 Clipboard and audio remain enabled for normal browsing. Disable clipboard with
 `SELKIES_ENABLE_CLIPBOARD=false` if the target environment has stricter data
@@ -111,8 +112,7 @@ Configuration and negative tests:
 bash scripts/test-railway-selkies.sh
 ```
 
-Target image build (Selkies currently publishes the pinned build image for
-`linux/amd64`):
+Target image build (the vendored Selkies source is built for `linux/amd64`):
 
 ```bash
 docker build --platform linux/amd64 -f Dockerfile.railway \

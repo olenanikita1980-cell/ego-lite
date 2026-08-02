@@ -1,5 +1,3 @@
-ARG SELKIES_BUILD_PLATFORM=linux/amd64
-
 FROM node:22-bookworm-slim AS build
 
 ENV CI=true
@@ -19,7 +17,32 @@ RUN npm run build --prefix package/ego-linux-host
 RUN npm prune --omit=dev --prefix package/ego-browser
 RUN npm prune --omit=dev --prefix package/ego-linux-host
 
-FROM --platform=${SELKIES_BUILD_PLATFORM} ghcr.io/selkies-project/selkies/py-build:main@sha256:81b15a6889e39b9c0d10f23acfde21ff3ad1c357345f092ee0b071056f04dcfb AS selkies-build
+FROM node:22-bookworm-slim AS selkies-web-build
+
+ENV CI=true \
+    SELKIES_INJECT=1 \
+    SELKIES_MODE=websockets \
+    SELKIES_UPLOAD_DIR=/home/ego
+
+WORKDIR /selkies-web-core
+COPY third_party/selkies/web/selkies-web-core/package.json third_party/selkies/web/selkies-web-core/package-lock.json ./
+RUN npm ci
+COPY third_party/selkies/web/selkies-web-core ./
+RUN npm run build
+
+WORKDIR /selkies-dashboard
+COPY third_party/selkies/web/selkies-dashboard/package.json third_party/selkies/web/selkies-dashboard/package-lock.json ./
+RUN npm ci
+COPY third_party/selkies/web/selkies-dashboard ./
+COPY third_party/selkies/web/universal-touch-gamepad /universal-touch-gamepad
+RUN cp /selkies-web-core/dist/selkies-core.js src/ \
+    && npm run build \
+    && mkdir -p /opt/selkies-web/src /opt/selkies-web/jsdb \
+    && cp -a dist/. /opt/selkies-web/ \
+    && cp /selkies-web-core/dist/selkies-core.js /opt/selkies-web/src/ \
+    && cp -a /selkies-web-core/dist/jsdb/. /opt/selkies-web/jsdb/
+
+COPY third_party/selkies/web/universal-touch-gamepad/universalTouchGamepad.js /opt/selkies-web/src/
 
 FROM node:22-bookworm-slim AS selkies-wheelhouse
 
@@ -31,10 +54,14 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update \
       python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=selkies-build /opt/pypi/dist/selkies-0.0.0.dev0-py3-none-any.whl /tmp/selkies-0.0.0.dev0-py3-none-any.whl
+WORKDIR /selkies-source
+COPY third_party/selkies/README.md third_party/selkies/pyproject.toml ./
+COPY third_party/selkies/src ./src
+COPY --from=selkies-web-build /opt/selkies-web ./src/selkies/selkies_web
+RUN sed -i -e 's|^version =.*|version = "0.0.0.dev0"|g' pyproject.toml
 RUN python3 -m pip wheel --no-cache-dir \
       --wheel-dir /opt/selkies-wheels \
-      /tmp/selkies-0.0.0.dev0-py3-none-any.whl
+      /selkies-source
 
 FROM node:22-bookworm-slim AS runtime
 
@@ -125,7 +152,7 @@ ENV HOME=/home/ego \
 LABEL org.opencontainers.image.source="https://github.com/citrolabs/ego-lite" \
       org.opencontainers.image.description="Ego Lite Linux host with a Selkies visual-control surface" \
       org.opencontainers.image.licenses="MIT AND MPL-2.0" \
-      org.opencontainers.image.selkies.build-digest="sha256:81b15a6889e39b9c0d10f23acfde21ff3ad1c357345f092ee0b071056f04dcfb"
+      org.opencontainers.image.selkies.source-revision="877cf202b4955d8477041c7831d4b34ebdb92d16"
 
 EXPOSE 8080
 ENTRYPOINT ["/usr/local/bin/ego-railway-entrypoint"]

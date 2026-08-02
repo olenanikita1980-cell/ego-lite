@@ -57,7 +57,7 @@ if (process.argv.includes("--check")) {
 }
 
 const port = parsePort(process.env.SELKIES_PORT ?? process.env.PORT ?? "8080");
-const timeoutMs = Number(process.env.EGO_SELKIES_BOOTSTRAP_TIMEOUT_MS ?? "30000");
+const timeoutMs = Number(process.env.EGO_SELKIES_BOOTSTRAP_TIMEOUT_MS ?? "60000");
 if (!Number.isInteger(timeoutMs) || timeoutMs < 1000 || timeoutMs > 120000) {
   throw new Error("EGO_SELKIES_BOOTSTRAP_TIMEOUT_MS must be between 1000 and 120000");
 }

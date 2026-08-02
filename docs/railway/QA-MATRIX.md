@@ -30,7 +30,7 @@ No tranche is production-ready until its required rows have fresh evidence.
 | Compatibility | Linux-host unit suite passes | `npm test` in `package/ego-linux-host` | passing locally (118 pass, 2 opt-in E2E skipped) |
 | Runtime | real Linux Chromium persistence smoke passes | controlled origin + persisted state | passing in built image, including two-container volume phases |
 | Selkies | configuration, secret redaction, and port conflicts are checked | `bash scripts/test-railway-selkies.sh` | passing locally |
-| Selkies | pinned linux/amd64 image builds | Docker/Railway build | pending (local Docker disk full) |
+| Selkies | vendored pinned source builds for linux/amd64 | Docker/Railway build | pending (live Railway rebuild in progress) |
 | Selkies | 1080p interaction has acceptable latency and visual quality | browser iframe + stats capture | pending |
 | Railway | real staging deployment passes | build, health, volume, restart, redeploy evidence | pending |
 

@@ -193,7 +193,7 @@ if ! curl --fail --silent --show-error "http://127.0.0.1:${internal_health_port}
   exit 70
 fi
 
-selkies >"$runtime_dir/selkies.log" 2>&1 &
+selkies > >(tee "$runtime_dir/selkies.log") 2>&1 &
 selkies_pid=$!
 remember_pid "$selkies_pid"
 
