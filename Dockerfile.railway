@@ -32,7 +32,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=selkies-build /opt/pypi/dist/selkies-0.0.0.dev0-py3-none-any.whl /tmp/selkies-0.0.0.dev0-py3-none-any.whl
-RUN python3 -m pip wheel --break-system-packages --no-cache-dir \
+RUN python3 -m pip wheel --no-cache-dir \
       --wheel-dir /opt/selkies-wheels \
       /tmp/selkies-0.0.0.dev0-py3-none-any.whl
 
