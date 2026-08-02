@@ -10,6 +10,7 @@
       "scripts/railway-entrypoint.sh",
       "scripts/railway-selkies-supervisor.sh",
       "scripts/selkies-token-bootstrap.mjs",
+      "third_party/selkies/**",
       "package/ego-browser/**",
       "package/ego-linux-host/**",
       "skills/ego-browser/**"
