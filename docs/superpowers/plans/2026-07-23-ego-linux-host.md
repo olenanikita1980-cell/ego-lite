@@ -994,14 +994,14 @@ git commit -am "fix(ego-linux-host): doctor, stale socket recovery, chrome respa
 
 Run against the design acceptance criteria:
 
-- [ ] **Step 1:** `install-linux.sh` → `ego-browser` on PATH  
-- [ ] **Step 2:** `ego-browser --doctor` healthy  
-- [ ] **Step 3:** linux-smoke heredoc (example.com title + snapshot)  
-- [ ] **Step 4:** Manual tab in browser → not visible in agent space `listTabs`  
-- [ ] **Step 5:** `handOff` → snapshot errors with user-control → `takeOver` recovers  
-- [ ] **Step 6:** Two spaces, disjoint tabs  
-- [ ] **Step 7:** Second heredoc reuses space by name  
-- [ ] **Step 8:** `package/ego-browser` `npm test` green  
+- [ ] **Step 1:** `install-linux.sh` → `ego-browser` on PATH
+- [ ] **Step 2:** `ego-browser --doctor` healthy
+- [ ] **Step 3:** linux-smoke heredoc (example.com title + snapshot)
+- [ ] **Step 4:** Manual tab in browser → not visible in agent space `listTabs`
+- [ ] **Step 5:** `handOff` → snapshot errors with user-control → `takeOver` recovers
+- [ ] **Step 6:** Two spaces, disjoint tabs
+- [ ] **Step 7:** Second heredoc reuses space by name
+- [ ] **Step 8:** `package/ego-browser` `npm test` green
 
 - [ ] **Step 9: Final commit if docs tweaks**
 

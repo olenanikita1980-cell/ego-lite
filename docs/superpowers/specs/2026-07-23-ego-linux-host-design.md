@@ -1,8 +1,8 @@
 # ego Linux Host (ego-shaped) — Design Spec
 
-**Date:** 2026-07-23  
-**Status:** Approved for planning  
-**Repo:** local clone of `citrolabs/ego-lite` at `/home/iago/projeto/ego-lite`  
+**Date:** 2026-07-23
+**Status:** Approved for planning
+**Repo:** local clone of `citrolabs/ego-lite` at `/home/iago/projeto/ego-lite`
 **Audience:** implementers building a Linux runtime that preserves the product purpose of ego lite
 
 ---
@@ -314,7 +314,7 @@ macOS `install.sh` remains macOS-only (DMG). This host does not download Citro�
 
 ### 7.2 Quality bar
 
-Good enough for skill patterns: `page.snapshot()` + semantic locators + `@N` refs.  
+Good enough for skill patterns: `page.snapshot()` + semantic locators + `@N` refs.
 **Not** claimed to match Citro kernel-level snapshot quality. Document the gap in host README / install docs.
 
 ---
@@ -375,14 +375,14 @@ Order is intentional: CDP → Spaces → Snapshot → install polish.
 
 ## 11. Explicit non-goals / backlog
 
-- Native Spaces UI / agent overlay chrome like macOS app  
-- Kernel-level snapshot parity  
-- Full Chrome extension/keychain migration  
-- Multi-agent selected-space isolation by client id  
-- Windows host  
-- Driving Windows Chrome from WSL  
-- npm publish / marketplace packaging  
-- Upstream PR to Citro before local stability  
+- Native Spaces UI / agent overlay chrome like macOS app
+- Kernel-level snapshot parity
+- Full Chrome extension/keychain migration
+- Multi-agent selected-space isolation by client id
+- Windows host
+- Driving Windows Chrome from WSL
+- npm publish / marketplace packaging
+- Upstream PR to Citro before local stability
 
 ---
 
